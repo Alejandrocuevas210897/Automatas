@@ -1,0 +1,15 @@
+class Prueba
+ {
+    public static void main2()
+    {
+        System.out.println("ANALIZADOR_LEXICO"+"Guillermo_Cruz"+"HOLA");
+        float valorfloat=-0.43;
+        double valordouble=12.43;
+        int valorint=-2;
+        boolean valorboolean=true;
+        valorint:=(valorint*1)+1.5/(valor*(valorint+2));
+        valorint:=valorboolean+valorint;
+
+
+    }
+}
