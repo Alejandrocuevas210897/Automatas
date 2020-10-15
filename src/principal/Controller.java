@@ -278,6 +278,224 @@ public class Controller implements Initializable {
         ChequeoErrores();//Se checan los errores
     }
 
+    public void AnalizadorSemantico() {
+        if (Lex & Sin) { //Verificamos que se hayan realizado los analisis previos
+            if (!ErrSin) {
+                ErrSemantico = new ArrayList<>();
+                Variables = new HashMap<>();
+                Sem = true;
+                //El largo de ProgramaSintaxis siempre va a ser igual al numero de lineas en el
+                //Lo recorro desde 1 porque las lineas del texto comienzan desde la 1
+                //Se separa la cadena programaSintaxis ya que esta por espacios
+                StringTokenizer tokenizer=new StringTokenizer(ProgramaSintaxis," ");
+                int i=1;//Se comienza la linea en 1 porque es la primer linea del texto
+                while(tokenizer.hasMoreTokens()){
+                    //Aqui utilizamos i-1 para comenzar con el 0 porque el largo de la palabra generada comienza desde 0
+                    int indice = Integer.parseInt(tokenizer.nextToken());
+                    //Si el indice es igual a VARDEC == 3 o VARDECINIT == 5 entrara al if dado que no necesita verificar su existencia previa
+                    //System.out.println("Linea: "+i);
+                    if (indice == 3 || indice == 5) {
+                        //System.out.println("Indice: "+indice+" Linea: "+i);
+                        Token tkn = new Token();
+                        ArrayList<String> ArregloAyudante = new ArrayList<>();
+                        //System.out.println(texto.get(i));
+                        //Tokenizamos la linea que naturalmente tendria los dos tipos de sintaxis previamente mencionados
+                        StringTokenizer stkn = new StringTokenizer(texto.get(i), " ={[()]}+-/*;\n\t\r", true);
+                        //De acuerdo a la sintaxis el primer valor es el tipo de variable
+                        //El segundo debe ser el identificador
+                        //El tercero debe ser el simbolo = que puede depender su existencia en caso de que se inicialice la variable o solo se declare
+                        //El cuarto el valor de la variable que puede depender si solo se declara la variable o tambien se inicializa
+                        while (stkn.hasMoreTokens()) {//Recorremos los tokens dentro de la linea
+                            //Un ayudante para contener los tokens
+                            String ayudante = stkn.nextToken();
+                            //Si el token en cuestion es un campo vacio , un signo igual o un punto y coma pasamos al siguiente token
+                            //El punto y coma seria el ultimo token posible por lo tanto saldria del while en este punto
+                            if (ayudante.trim().isEmpty() || ayudante.equals("=") || ayudante.equals(";")) {
+                                continue;
+                            }
+                            //   System.out.println(ayudante);
+                            //Se agrega cada ayudante a un arreglo en caso de no ser vacio , igual o ;
+                            //Nuestra sintaxis nos dice que pueden existir un arreglo con tamaÃ±o 2 o 3
+                            ArregloAyudante.add(ayudante);
+                        }
+                        String regex = "";//Iniciamos un auxiliar para contener la expresion regular
+                        String ayudante2 = ArregloAyudante.get(0);//sacamos el tipo exacto del token
+
+                        regex = getTipo(regex, ayudante2);//comparo el tipo con la expresion regular para obtener el codigo de la expresion regular
+
+                        //Vamos a ver que tipo de declaracion es para agregar a la tabla de variables
+                        //TamaÃ±o 3 = TIPO + VARIABLE/TOKEN + VALOR
+                        if (ArregloAyudante.size() == 3) {
+                            if (!Variables.containsKey(ArregloAyudante.get(1))) {
+                                if (Pattern.matches(regex, ArregloAyudante.get(2))) { //si el valor de la variable hace match con el tipo se agrega a la tabla
+                                    tkn.setTipo(ArregloAyudante.get(0));
+                                    tkn.setToken(ArregloAyudante.get(1));
+                                    tkn.setValor(ArregloAyudante.get(2));
+                                    tkn.setLinea(String.valueOf(i));
+                                    Variables.put(ArregloAyudante.get(1), tkn);
+                                } else {//caso contrario hay un error semantico
+                                    ErrSem = true;
+                                    ErrSemantico.add("\nLa variable: ' " + ArregloAyudante.get(1) + "' de tipo: ' " + ayudante2 + " ' no es compatible con el valor: ' " + ArregloAyudante.get(2) + "\n");
+                                }
+                            } else {
+                                ErrSem = true;
+                                ErrSemantico.add("\nSe trato de declarar la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i
+                                        + " con un valor de: " + ArregloAyudante.get(2) + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea() + " con el valor: " + Variables.get(ArregloAyudante.get(1)).getValor() + "\n");
+                            }
+                            //TamaÃ±o 2 = TIPO + VARIABLE
+                        }
+                        if (ArregloAyudante.size() == 2) {
+                            //Si la variable no existe procedemos a a agregarla
+                            if (!Variables.containsKey(ArregloAyudante.get(1))) {
+                                tkn.setTipo(ArregloAyudante.get(0));
+                                tkn.setToken(ArregloAyudante.get(1));
+                                tkn.setValor("null");
+                                tkn.setLinea(String.valueOf(i));
+                                Variables.put(ArregloAyudante.get(1), tkn);
+                            } else {
+                                //Caso contrario mensaje de que ya ests declarada previemante
+                                ErrSem = true;
+                                ErrSemantico.add("\nSe trato de declarar nuevamente la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea());
+                            }
+                            //TamaÃ±o 4 = TIPO + VAIRABLE + VALOR CON SIGNO NEGATIVO (int x , -45.5)
+                        }
+                        else if (ArregloAyudante.size() == 4) {
+                            String valor = ArregloAyudante.get(2) + ArregloAyudante.get(3); //Tomamos el valor convertimos a negativo agregando su signo al string
+                            //Si la variable no esta previamente declarada procedemos a agregarla
+                            if (!Variables.containsKey(ArregloAyudante.get(1))) {
+                                // System.out.println("TamaÃ±o arreglo = 4");
+                                if (Pattern.matches(regex, valor)) { //Si el patron de la variable da match con su valor
+                                    tkn.setTipo(ArregloAyudante.get(0));
+                                    tkn.setToken(ArregloAyudante.get(1));
+                                    //System.out.println("Valor: "+valor);
+                                    tkn.setValor(valor);
+                                    tkn.setLinea(String.valueOf(i));
+                                    Variables.put(ArregloAyudante.get(1), tkn);
+                                } else {//caso contrario hay un error semantico y se agrega
+                                    ErrSem = true;
+                                    ErrSemantico.add("\nLa variable: ' " + ArregloAyudante.get(1) + "' de tipo: ' " + ayudante2 + " ' no es compatible con el valor: ' " + valor);
+                                }
+                            } else {//caso contrario hay un error semantico y se agrega
+                                ErrSem = true;
+                                ErrSemantico.add("\nSe trato de declarar la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i
+                                        + " con un valor de: " + valor + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea() + " con el valor: " + Variables.get(ArregloAyudante.get(1)).getValor());
+                            }
+                        }
+
+                    }//indice = 4  x=5 se debe confirmar que exista la variable
+                    //Tenemos que ver que la variable esta previamente inicializada para agregar un nuevo valor o inicializarla con cierto valor
+                    if (indice == 4) {
+                        String variable, valorNuevo;
+                        ArrayList<String> ArregloAyudante = new ArrayList<>();//Este arraylist contendra los tokens encontrados
+                        StringTokenizer stkn = new StringTokenizer(texto.get(i), " ={[()]}+-/*;\n\t\r", true);
+                        //Si entrÃ³ aquÃ­ quiere decir que encontro un cambio de valor de variable o inicializacion tenemos
+                        //que confirmar que dicha variable existe antes de hacer algun cambio
+                        //y nuestra sintaxis debe ser x = 0;
+                        while (stkn.hasMoreTokens()) {
+                            String ayudante = stkn.nextToken();
+                            //En el proximo if vamos a ver si es un espacio vacio, un = o un ;
+                            //de ser esto positivo se pasa al siguiente token;
+                            if (ayudante.trim().isEmpty() || ayudante.equals("=") || ayudante.equals(";")) {
+                                continue;
+                            }
+                            //Naturalmente se deberian de agregar siempre y solamente 2 valores , la variable y el nuevo valor
+                            //System.out.println(texto.get(i)+" num linea "+i);
+                            //System.out.println(ayudante);
+                            ArregloAyudante.add(ayudante);
+                        }
+                        //System.out.println(ArregloAyudante.get(0));
+                        variable = ArregloAyudante.get(0);
+                        if (Variables.containsKey(variable)) {//Si la variable existe podemos agregar su valor
+                            String regex = "";// inciamos auxiliar para contener la expresion regular de cada tipo
+                            String ayudante2 = Variables.get(variable).getTipo();//sacamos el tipo exacto del token
+                            // System.out.println("Se contiene la variable"+ayudante2);
+                            regex = getTipo(regex, ayudante2);
+                            //Aqui ya tenemos la expresion regular dependiendo el tipo de la variable y tenemos que ver si el valor es compatible dependiendo el tipo
+                            if (Pattern.matches(regex, ArregloAyudante.get(1))) {//Si el patron da match con su valor procedemos a agragarlo a la tabla
+                                Variables.get(variable).setValor(ArregloAyudante.get(1));
+                            } else {//caso contrario da error semanitco y lo agregamos
+                                ErrSem = true;
+                                ErrSemantico.add("\nSe trato de inicializar la variable: ' " + variable + " ' de tipo: ' " + Variables.get(variable).getTipo() +
+                                        " ' con un valor: ' " + ArregloAyudante.get(1) + " ' y no son compatibles");
+                            }
+                        } else {//Caso contrario da error semantico y lo agregamos
+                            //System.out.println("Se encontro un error semantico");
+                            ErrSem = true;
+                            ErrSemantico.add("\nSe tratÃ³ de inicializar o agregar un nuevo valor a la variable: " + variable +
+                                    " la cual no ha sido declarada\tLinea: " + i);
+
+                        }
+                    }
+                    //Si el indicie es = a 6 quiere decir que se encontro una expresion
+                    if (indice == 6) {
+                        //                       x=x + x-x;
+                        //Analizador Sintactico
+                    }
+                    VarsTkns = new ArrayList<>();
+                    Variables.forEach((k, v) -> VarsTkns.add(v));
+                    t2 = FXCollections.observableArrayList(VarsTkns);
+                    CargaSemantico();//SE CARGAN LAS VARIABLES DEL ANALISIS A LA INTERGAZ
+                    i++;
+                }
+            }
+            else {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Se encontraron errores sintacticos, proceda a corregir", ButtonType.OK);
+                alert.showAndWait();
+                return;
+            }
+            if (!Expresiones.isEmpty()) {//Checamos si hay elementos en la tabla de expresiones
+                Expresiones.forEach(expresion -> {
+                    //Recorremos todas las expresiones guardadas durante el analisis semantico
+                    if (Variables.containsKey(expresion.getAsigna())) {//Si la variable a la que se le quiere asignar la expresion existe entra
+                        String tipo = Variables.get(expresion.getAsigna()).getTipo();//Aqui se guardara el tipo de la variable para asginar
+                        StringTokenizer stkn = new StringTokenizer(expresion.getExpresion(), " *+-/()", true);
+                        while (stkn.hasMoreTokens()) {
+                            String token = stkn.nextToken();
+                            if (token.trim().isEmpty()) {
+                                continue;
+                            }
+                            if (Pattern.matches(Tipo.IDENTIFICADORES.patron, token)) {//Se procede a trabajar solo con los identificadores de la expresion
+                                if (Variables.containsKey(token)) {//Si existe la variable
+                                    if (Variables.get(token).getTipo().equals(tipo)) {//Las variables son del mismo tipo
+                                        if (!Variables.get(token).getValor().equals("null")) {//La variable tratada si tiene valor
+                                            //Aun no se trabaja con expresiones en forma , solo sintaxis y contexto
+
+                                        } else {//Caso contrario error semantico sin valor
+                                            ErrSemantico.add("\nLa variable: " + token + " en la expresion: " + expresion.getAsigna() + ":=" + expresion.getExpresion() + " de tipo: " + Variables.get(token).getTipo() + " tiene un valor nulo");
+                                            ErrSem = true;
+                                        }
+                                    } else {//Caso contrario Error semantico tipos diferentes
+                                        ErrSemantico.add("\nLa variable: " + token + " en la expresion: " + expresion.getAsigna() + ":=" + expresion.getExpresion() + " de tipo: " + Variables.get(token).getTipo() + " no es compatible con " +
+                                                "la variable principal: " + expresion.getAsigna() + " la cual es de tipo: " + tipo);
+                                        ErrSem = true;
+                                    }
+                                } else {//Caso contrario Error semantico no existe variable
+                                    ErrSemantico.add("\nLa variable: " + token + " en la expresion: " + expresion.getAsigna() + ":=" + expresion.getExpresion() + " no ha sido declarada");
+                                    ErrSem = true;
+                                }
+                            }
+                        }
+                    } else {//caso contrario error semantico no funciona
+                        ErrSemantico.add("\nLa variable: " + expresion.getAsigna() + " a la que se le quiere asignar el resultado de la expresion: " +
+                                expresion.getExpresion() + " no se encuentra declarada\n");
+                        ErrSem = true;
+                    }
+                });
+
+            }
+        }
+        else {//Se encontro que no se han hecho los analisi previos , muesta el error
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Debe realizar los analisis previos", ButtonType.OK);
+            alert.showAndWait();
+            return;
+        }
+        RecorreVariables();//SE recorren variables por consola , no necesario
+        ChequeoVariablesSinInicializar(); //Se checan las variables cuyo valor es nulo
+        ActualizaValoresTablaTokens();//Actualiza la tabla de tokens con los nuevos valores encontrados
+        ChequeoErrores();//Checa los errores encontrados y los recarga;
+
+        // System.out.println("Sintaxis: "+ProgramaSintaxis);
+    }
 
     //Metodo que dependiendo el tipo de una variable regresa un expresion regular
     private String getTipo(String regex, String ayudante2) {
