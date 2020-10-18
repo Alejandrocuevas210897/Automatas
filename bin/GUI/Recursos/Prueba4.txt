@@ -1,0 +1,11 @@
+class Prueba
+ {
+    public static void main2()
+    {
+        System.out.println("Analizador");
+	int valor=1;
+	System.out.println("relleno");
+	float valor2=0.58;
+	double valor=3.21;
+    }
+}

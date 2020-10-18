@@ -1,9 +1,11 @@
-class Prueba2
+class Prueba
  {
     public static void main2()
     {
         System.out.println("Analizador");
-	int valorint;
-	valorint=1.5;
+	int valorint=1;
+	float valorfloat = 0.95;
+	double valordouble ="cuevas";
+
     }
 }

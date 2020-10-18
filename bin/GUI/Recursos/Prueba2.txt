@@ -3,7 +3,7 @@ class Prueba2
     public static void main2()
     {
         System.out.println("Analizador");
-	int valorint;
+	int valorint=1;
 	valorint=1.5;
     }
 }
