@@ -78,6 +78,14 @@ public class Controller implements Initializable {
         NewStage.show();
     }
 
+    public void RealizarTodosLosAnalisis()
+    {
+    	AnalizadorLexico();
+    	AnalizadorSintactico();
+    	AnalizadorSemantico();
+    	
+    }
+
     public void AnalizadorLexico() {
         Tokens = new ArrayList<>();
         TokensNoAceptados = new ArrayList<>();
@@ -636,7 +644,7 @@ public class Controller implements Initializable {
         try {
             Leer("src/GUI/Recursos/Prueba.txt");
         } catch (IOException e) {
-            System.out.println("ERRORSILLO");
+            System.out.println("ERROR AL LEER EL ARCHIVO");
         }
     }
 
