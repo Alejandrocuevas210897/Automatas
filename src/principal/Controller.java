@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+import static java.lang.Thread.sleep;
 
 public class Controller implements Initializable {
 
@@ -33,8 +33,8 @@ public class Controller implements Initializable {
     private ArrayList<Token> TokensNoAceptados, VarsTkns;
     private ArrayList<Expresion> Expresiones;
     private ArrayList<String> ErroresSintaxis, ErrSemantico, Warnings;
-    private ObservableList<Token> t; //Lista de tokens cargar tabla
-    private ObservableList<Token> t2; //Lista de variables cargar tabla, no es necesario
+    private ObservableList<Token> t;
+    private ObservableList<Token> t2;
     private String Codigo = "", ProgramaSintaxis = "";
     @FXML
     private TableView<Token> table, table2;
@@ -77,13 +77,10 @@ public class Controller implements Initializable {
         NewStage.initStyle(StageStyle.TRANSPARENT);
         NewStage.show();
     }
-
-    public void RealizarTodosLosAnalisis()
-    {
+    public void RealizarTodosLosAnalisis() {
     	AnalizadorLexico();
     	AnalizadorSintactico();
     	AnalizadorSemantico();
-    	
     }
 
     public void AnalizadorLexico() {
@@ -230,7 +227,6 @@ public class Controller implements Initializable {
                                             exp.setExpresion(Expresion);//Expresion con espacios
                                             exp.setLinea(i);//Numero de linea
                                             exp.setPostorder(ana.Conversion(Expresion));
-                                            System.out.println(ana.Conversion(Expresion));
                                             Expresiones.add(exp);
                                         }
                                     }
@@ -280,7 +276,14 @@ public class Controller implements Initializable {
             }
         } else {//Se encontro que no se hizo el analisis previo
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Debe realizar el analisis lexico", ButtonType.OK);
-            alert.showAndWait();
+            alert.show();
+            try {
+                sleep(2000);
+                alert.close();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         //Expresiones.forEach(v -> System.out.println(v.getAsigna() + v.getExpresion())); //<<--Se imprime la variable y la expresion que se le quiere asignar
         ChequeoErrores();//Se checan los errores
@@ -323,20 +326,24 @@ public class Controller implements Initializable {
                             }
                             //   System.out.println(ayudante);
                             //Se agrega cada ayudante a un arreglo en caso de no ser vacio , igual o ;
-                            //Nuestra sintaxis nos dice que pueden existir un arreglo con tamaÃ±o 2 o 3
+                            //Nuestra sintaxis nos dice que pueden existir un arreglo con tamaño 2 o 3
                             ArregloAyudante.add(ayudante);
                         }
                         String regex = "";//Iniciamos un auxiliar para contener la expresion regular
                         String ayudante2 = ArregloAyudante.get(0);//sacamos el tipo exacto del token
-
+                        
+                        
                         regex = getTipo(regex, ayudante2);//comparo el tipo con la expresion regular para obtener el codigo de la expresion regular
 
                         //Vamos a ver que tipo de declaracion es para agregar a la tabla de variables
-                        //TamaÃ±o 3 = TIPO + VARIABLE/TOKEN + VALOR
+                        //Tamaño 3 = TIPO + VARIABLE/TOKEN + VALOR
                         if (ArregloAyudante.size() == 3) {
+                        	ArregloAyudante.forEach(System.out::println);
                             if (!Variables.containsKey(ArregloAyudante.get(1))) {
+                            	System.out.println("Hola");
                                 if (Pattern.matches(regex, ArregloAyudante.get(2))) { //si el valor de la variable hace match con el tipo se agrega a la tabla
-                                    tkn.setTipo(ArregloAyudante.get(0));
+                                    System.out.println("Hola2");
+                                	tkn.setTipo(ArregloAyudante.get(0));
                                     tkn.setToken(ArregloAyudante.get(1));
                                     tkn.setValor(ArregloAyudante.get(2));
                                     tkn.setLinea(String.valueOf(i));
@@ -350,7 +357,7 @@ public class Controller implements Initializable {
                                 ErrSemantico.add("\nSe trato de declarar la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i
                                         + " con un valor de: " + ArregloAyudante.get(2) + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea() + " con el valor: " + Variables.get(ArregloAyudante.get(1)).getValor() + "\n");
                             }
-                            //TamaÃ±o 2 = TIPO + VARIABLE
+                            //Tamaño 2 = TIPO + VARIABLE
                         }
                         if (ArregloAyudante.size() == 2) {
                             //Si la variable no existe procedemos a a agregarla
@@ -365,13 +372,12 @@ public class Controller implements Initializable {
                                 ErrSem = true;
                                 ErrSemantico.add("\nSe trato de declarar nuevamente la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea());
                             }
-                            //TamaÃ±o 4 = TIPO + VAIRABLE + VALOR CON SIGNO NEGATIVO (int x , -45.5)
-                        }
-                        else if (ArregloAyudante.size() == 4) {
+                            //Tamaño 4 = TIPO + VAIRABLE + VALOR CON SIGNO NEGATIVO (int x , -45.5)
+                        } else if (ArregloAyudante.size() == 4) {
                             String valor = ArregloAyudante.get(2) + ArregloAyudante.get(3); //Tomamos el valor convertimos a negativo agregando su signo al string
                             //Si la variable no esta previamente declarada procedemos a agregarla
                             if (!Variables.containsKey(ArregloAyudante.get(1))) {
-                                // System.out.println("TamaÃ±o arreglo = 4");
+                                // System.out.println("Tamaño arreglo = 4");
                                 if (Pattern.matches(regex, valor)) { //Si el patron de la variable da match con su valor
                                     tkn.setTipo(ArregloAyudante.get(0));
                                     tkn.setToken(ArregloAyudante.get(1));
@@ -396,7 +402,7 @@ public class Controller implements Initializable {
                         String variable, valorNuevo;
                         ArrayList<String> ArregloAyudante = new ArrayList<>();//Este arraylist contendra los tokens encontrados
                         StringTokenizer stkn = new StringTokenizer(texto.get(i), " ={[()]}+-/*;\n\t\r", true);
-                        //Si entrÃ³ aquÃ­ quiere decir que encontro un cambio de valor de variable o inicializacion tenemos
+                        //Si entró aquí quiere decir que encontro un cambio de valor de variable o inicializacion tenemos
                         //que confirmar que dicha variable existe antes de hacer algun cambio
                         //y nuestra sintaxis debe ser x = 0;
                         while (stkn.hasMoreTokens()) {
@@ -429,7 +435,7 @@ public class Controller implements Initializable {
                         } else {//Caso contrario da error semantico y lo agregamos
                             //System.out.println("Se encontro un error semantico");
                             ErrSem = true;
-                            ErrSemantico.add("\nSe tratÃ³ de inicializar o agregar un nuevo valor a la variable: " + variable +
+                            ErrSemantico.add("\nSe trató de inicializar o agregar un nuevo valor a la variable: " + variable +
                                     " la cual no ha sido declarada\tLinea: " + i);
 
                         }
@@ -445,8 +451,7 @@ public class Controller implements Initializable {
                     CargaSemantico();//SE CARGAN LAS VARIABLES DEL ANALISIS A LA INTERGAZ
                     i++;
                 }
-            }
-            else {
+            } else {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Se encontraron errores sintacticos, proceda a corregir", ButtonType.OK);
                 alert.showAndWait();
                 return;
@@ -491,8 +496,7 @@ public class Controller implements Initializable {
                 });
 
             }
-        }
-        else {//Se encontro que no se han hecho los analisi previos , muesta el error
+        } else {//Se encontro que no se han hecho los analisi previos , muesta el error
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Debe realizar los analisis previos", ButtonType.OK);
             alert.showAndWait();
             return;
@@ -518,6 +522,9 @@ public class Controller implements Initializable {
         }
         if (ayudante2.equals("boolean")) {
             regex = Tipo.BOOLEAN.patron;
+        }
+        if (ayudante2.equals("string")) {
+            regex = Tipo.STRING.patron;
         }
         return regex;
     }
@@ -644,7 +651,7 @@ public class Controller implements Initializable {
         try {
             Leer("src/GUI/Recursos/Prueba.txt");
         } catch (IOException e) {
-            System.out.println("ERROR AL LEER EL ARCHIVO");
+            System.out.println("ERRORSILLO");
         }
     }
 

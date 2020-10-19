@@ -18,17 +18,17 @@ public enum Sintaxis {
     //Declaracion de variable int x ; ,no debe existir la llave x, Hashmap llave=x objeto: (id=x tipo=entero valor=null)
     //No se debe comparar su tipo con el valor ya que aun no se inicializa
     //IDENTIFICADOR ==>   3
-    VARDEC("(\\s)*(int|boolean|double|float)(\\s)"+ Tipo.IDENTIFICADORES.patron+"(\\s)*(\\;)(\\s)*"),
+    VARDEC("(\\s)*(int|boolean|double|float|string)(\\s)"+ Tipo.IDENTIFICADORES.patron+"(\\s)*(\\;)(\\s)*"),
 
     //Inicializacion de variable x=5 ; ,posterior a su creacion ,debe existir la llave x en el hashmap y reemplazar su valor por 5 en este caso
     //Se debe confirmar que el tipo sea compatible con su valor
     //IDENTIFICADOR ==>   4
-    VARINIT("(\\s*)"+Tipo.IDENTIFICADORES.patron+"(\\s)*(=)(\\s*)((true|false)|(((\\-)?\\d+(\\.)?\\d*)))(\\s)*(\\;)(\\s)*"),
+    VARINIT("(\\s*)"+Tipo.IDENTIFICADORES.patron+"(\\s)*(=)(\\s*)((true|false)|(((\\-)?\\d+(\\.)?\\d*))|"+Tipo.STRING.patron+")(\\s)*(\\;)(\\s)*"),
 
     //Se inicializa la variable y se le da un valor int x = 5 ; , no debe existir la llave x, Hashmap llave=x objeto: (id=x tipo=entero valor=5)
     //Se debe confirmar que el tipo sea compatible con su valor
     //IDENTIFICADOR ==>   5
-    VARDECINIT("(\\s)*(int|boolean|double|float)(\\s)"+Tipo.IDENTIFICADORES.patron+"(\\s)*(=)(\\s*)((true|false)|(((\\-)?\\d+(\\.)?\\d*)))(\\s)*(\\;)(\\s)*"),
+    VARDECINIT("(\\s)*(int|boolean|double|float|string)(\\s)"+Tipo.IDENTIFICADORES.patron+"(\\s)*(=)(\\s*)((true|false)|(((\\-)?\\d+(\\.)?\\d*))|"+Tipo.STRING.patron+")(\\s)*(\\;)(\\s)*"),
 
     //Con variables ya inicializadas o numeros, se tienen que confirmar tipos compatibles, tipo de expresion (Recomendacion guardar en tabla aparte)
     //Despues del igual debe ir siempre un : sin espacios ejemplo ( x=:->Expresion<-; ) en este caso se llama indicador de expresion (INDIEXP)
