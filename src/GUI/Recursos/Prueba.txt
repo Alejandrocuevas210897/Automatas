@@ -1,9 +1,10 @@
-class Prueba2
+class Prueba
  {
+    int algo = 13;
     public static void main2()
     {
-        System.out.println("Analizador");
-	int valorint;
-	valorint=1.5;
+	int d = 12;
+	d := d*2+algo;
+    
     }
 }
