@@ -1,0 +1,14 @@
+class Prueba
+ {
+    public static void main2()
+    {
+	int a = 13;
+	int b = 10;
+	int c = 20; 
+	int d = 12;
+	int e = 25;
+	int x = 0;
+	x := a*b/(c+d-e);
+    
+    }
+}
