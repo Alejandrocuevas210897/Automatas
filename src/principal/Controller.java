@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Thread.sleep;
+
 
 public class Controller implements Initializable {
 
@@ -33,15 +33,29 @@ public class Controller implements Initializable {
     private ArrayList<Token> TokensNoAceptados, VarsTkns;
     private ArrayList<Expresion> Expresiones;
     private ArrayList<String> ErroresSintaxis, ErrSemantico, Warnings;
-    private ObservableList<Token> t;
-    private ObservableList<Token> t2;
+    private ObservableList<Token> t; //Lista de tokens cargar tabla
+    private ObservableList<Token> t2; //Lista de variables cargar tabla, no es necesario
+    private ObservableList<Expresion> t3;//Lista de expresiones para cargar tabla
+    private ObservableList<Triplo> t4; //Carga el triplo de la expresion;
     private String Codigo = "", ProgramaSintaxis = "";
+    private Tab temptab = new Tab("Triplos"); //tabla temporal para los triplos
+    TableView tv = new TableView(); //tableView para despegar la informacion de los triplos
     @FXML
     private TableView<Token> table, table2;
+    @FXML
+    private TableView<Expresion> table3;
+    @FXML
+    private TableView<Triplo> table4;
     @FXML
     private TableColumn tkn, tpo, vlr, lna, cna;
     @FXML
     private TableColumn tkn2, tpo2, vlr2, lna2;
+    @FXML
+    private TabPane tabpane;
+    @FXML
+    private TableColumn expasign,expexp,exppost;
+    @FXML
+    private TableColumn trid,tri1,triop,tri2,trires;
     @FXML
     private TextArea txtCDG;
     @FXML
@@ -64,14 +78,6 @@ public class Controller implements Initializable {
         Parent root = FXMLLoader.load(getClass().getResource("GUI.fxml"));
         Actualstage.close();
         Stage NewStage = new Stage();
-        root.setOnMousePressed(event -> {
-            UbicacionY = event.getSceneY();
-            UbicacionX = event.getSceneX();
-        });
-        root.setOnMouseDragged(event -> {
-            NewStage.setX(event.getScreenX() - UbicacionX);
-            NewStage.setY(event.getScreenY() - UbicacionY);
-        });
         NewStage.setScene(new Scene(root, 975, 495));
         NewStage.setResizable(false);
         NewStage.initStyle(StageStyle.TRANSPARENT);
@@ -81,6 +87,31 @@ public class Controller implements Initializable {
     	AnalizadorLexico();
     	AnalizadorSintactico();
     	AnalizadorSemantico();
+    }
+
+    public void TriplosTab() throws IOException {
+        tv = new TableView();
+        tv.setVisible(true);
+        TableColumn tbc = new TableColumn("ID");
+        tbc.setPrefWidth(100);
+        TableColumn tbc2 = new TableColumn("T1");
+        tbc2.setPrefWidth(100);
+        TableColumn tbc3 = new TableColumn("Operador");
+        tbc3.setPrefWidth(100);
+        TableColumn tbc4 = new TableColumn("T2");
+        tbc4.setPrefWidth(100);
+        //TableColumn tbc5 = new TableColumn("Resultado");
+        //tbc5.setPrefWidth(100);
+        tbc.setCellValueFactory(new PropertyValueFactory<Triplo, String>("idtriplo"));
+        tbc2.setCellValueFactory(new PropertyValueFactory<Triplo, String>("t1"));
+        tbc3.setCellValueFactory(new PropertyValueFactory<Triplo, String>("op"));
+        tbc4.setCellValueFactory(new PropertyValueFactory<Triplo, String>("t2"));
+        //tbc5.setCellValueFactory(new PropertyValueFactory<Triplo, String>("resultado"));
+        tv.getColumns().addAll(tbc, tbc2, tbc3, tbc4/*, tbc5*/);
+        tv.getItems().setAll(t4);
+        temptab.setContent(tv);
+        tabpane.getTabs().addAll(temptab);
+       // tabpane.getSelectionModel().select(temptab);
     }
 
     public void AnalizadorLexico() {
@@ -143,7 +174,7 @@ public class Controller implements Initializable {
                 }
                 //Caso contrario no hizo match entonces lo agregamos a la lista de errores
                 if (!Matched) {
-                    System.out.println("Se encontró un error lexico:");
+                   //---- System.out.println("Se encontro un error lexico:");
                     //Establecemos que hay errores lexicos
                     ErrLex = true;
                     //Agregamos a un arreglo los errores lexicos encontrados
@@ -193,7 +224,7 @@ public class Controller implements Initializable {
                                 if (sin.toString().equals(tipoSintactico.get(j))) {
                                     //Si el identificador es 6 se va a validar la forma de una expresion
                                     if (j == 6) {//Se va a validar la forma de la expresion
-                                        System.out.println("Se encontro expresion: " + lineaActual);
+                                    	//---- System.out.println("Se encontro expresion: " + lineaActual);
                                         String Expresion = "";
                                         String Asigna = "";
                                         boolean salto1tkn = false;//bandera para indicar que se salto el primer token (identificador)
@@ -214,20 +245,23 @@ public class Controller implements Initializable {
                                         }
                                         //Al terminar ese ciclo tendriamos una expresion y procedemos a evaluar
                                         //System.out.println(expresion);
-                                        AnalizadorExpresion ana = new AnalizadorExpresion();
+                                        AnalizadorExpresion2 ana = new AnalizadorExpresion2();
                                         if (!ana.Analisis(Expresion)) { //Si el analisis de expresion da falso , quiere decir que la expresion no tiene buena sintaxis
                                             //System.out.println("Entro: "+lineaActual);
                                             ErroresSintaxis.add("\nSe encontro un error sintactico en la expresion: " + Expresion + " que se encuentra en la linea: " + i + "\n");
                                             ErrSin = true;
-                                        } else {//Caso contrario se agrega en un objeto a un arreglo de expresiones
+                                        } else {
+                                            //Caso contrario se agrega en un objeto a un arreglo de expresiones
                                             //System.out.println("Expresion");
 
                                             Expresion exp = new Expresion();//Se crea una nuevo objeto expresion
                                             exp.setAsigna(Asigna);//Variable que se le quiere asignar dicha expresion
                                             exp.setExpresion(Expresion);//Expresion con espacios
                                             exp.setLinea(i);//Numero de linea
-                                            exp.setPostorder(ana.Conversion(Expresion));
+                                            exp.setPostorder(new Conversor().aPostorder(Expresion));
+                                            exp.setTriplo(ana.tripletear(exp.getPostorder()));
                                             Expresiones.add(exp);
+
                                         }
                                     }
                                     //System.out.println(" ==> "+j);
@@ -246,12 +280,29 @@ public class Controller implements Initializable {
                     }
                     //Como no hace match entra aqui y el error se agrega a un arreglo de errores de sintaxis
                     if (!Matched) {
-                        System.out.println("Se encontro un error sintactico");
+                    	//----System.out.println("Se encontro un error sintactico");
                         ErroresSintaxis.add("ERROR ==>   " + lineaActual + "    <== Verifique la sintaxis en la linea: # " + i + "\n");
                         ErrSin = true;
                     }
                 }
                 System.out.println();
+                if(!Expresiones.isEmpty()) {
+                    t3 = FXCollections.observableArrayList(Expresiones);
+                    CargaExpresiones();
+                    Expresiones.forEach(e -> {
+                    	//----System.out.println("Expresion: " + e.getAsigna() + " = " + e.getExpresion());
+                    	//---- System.out.println("Expresion postorder: " + e.getPostorder());
+                    	//----System.out.println("Triplos: ");
+                        e.getTriplo().forEach(System.out::println);
+                      //---- System.out.println(e.getAsigna() + " = t" + e.getTriplo().size());
+                        Triplo res=new Triplo();
+                        res.setT1(e.getAsigna());
+                        res.setT2("TempCuevas"+e.getTriplo().size());
+                        res.setOp("=");
+                        e.getTriplo().add(res);
+                      //---- System.out.println();
+                    });
+                }
                 //Verifica si el patron obtenido hace match con el de la sintaxis general y si no existen errores sintacticos por linea
                 if (!ErrSin) {
                     if (!Pattern.matches(Sintaxis.SINTAXIS_GENERAL.patronSin, ProgramaSintaxis)) {
@@ -276,18 +327,15 @@ public class Controller implements Initializable {
             }
         } else {//Se encontro que no se hizo el analisis previo
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Debe realizar el analisis lexico", ButtonType.OK);
-            alert.show();
-            try {
-                sleep(2000);
-                alert.close();
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            alert.showAndWait();
         }
+
+
+
         //Expresiones.forEach(v -> System.out.println(v.getAsigna() + v.getExpresion())); //<<--Se imprime la variable y la expresion que se le quiere asignar
         ChequeoErrores();//Se checan los errores
     }
+
 
     public void AnalizadorSemantico() {
         if (Lex & Sin) { //Verificamos que se hayan realizado los analisis previos
@@ -331,19 +379,15 @@ public class Controller implements Initializable {
                         }
                         String regex = "";//Iniciamos un auxiliar para contener la expresion regular
                         String ayudante2 = ArregloAyudante.get(0);//sacamos el tipo exacto del token
-                        
-                        
+
                         regex = getTipo(regex, ayudante2);//comparo el tipo con la expresion regular para obtener el codigo de la expresion regular
 
                         //Vamos a ver que tipo de declaracion es para agregar a la tabla de variables
                         //Tamaño 3 = TIPO + VARIABLE/TOKEN + VALOR
                         if (ArregloAyudante.size() == 3) {
-                        	ArregloAyudante.forEach(System.out::println);
                             if (!Variables.containsKey(ArregloAyudante.get(1))) {
-                            	System.out.println("Hola");
                                 if (Pattern.matches(regex, ArregloAyudante.get(2))) { //si el valor de la variable hace match con el tipo se agrega a la tabla
-                                    System.out.println("Hola2");
-                                	tkn.setTipo(ArregloAyudante.get(0));
+                                    tkn.setTipo(ArregloAyudante.get(0));
                                     tkn.setToken(ArregloAyudante.get(1));
                                     tkn.setValor(ArregloAyudante.get(2));
                                     tkn.setLinea(String.valueOf(i));
@@ -357,7 +401,7 @@ public class Controller implements Initializable {
                                 ErrSemantico.add("\nSe trato de declarar la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i
                                         + " con un valor de: " + ArregloAyudante.get(2) + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea() + " con el valor: " + Variables.get(ArregloAyudante.get(1)).getValor() + "\n");
                             }
-                            //Tamaño 2 = TIPO + VARIABLE
+                            //Tama�o 2 = TIPO + VARIABLE
                         }
                         if (ArregloAyudante.size() == 2) {
                             //Si la variable no existe procedemos a a agregarla
@@ -373,7 +417,8 @@ public class Controller implements Initializable {
                                 ErrSemantico.add("\nSe trato de declarar nuevamente la variable: " + ArregloAyudante.get(1) + " en la lnea: " + i + " la cual ya esta declarada en la linea: " + Variables.get(ArregloAyudante.get(1)).getLinea());
                             }
                             //Tamaño 4 = TIPO + VAIRABLE + VALOR CON SIGNO NEGATIVO (int x , -45.5)
-                        } else if (ArregloAyudante.size() == 4) {
+                        }
+                        else if (ArregloAyudante.size() == 4) {
                             String valor = ArregloAyudante.get(2) + ArregloAyudante.get(3); //Tomamos el valor convertimos a negativo agregando su signo al string
                             //Si la variable no esta previamente declarada procedemos a agregarla
                             if (!Variables.containsKey(ArregloAyudante.get(1))) {
@@ -435,15 +480,14 @@ public class Controller implements Initializable {
                         } else {//Caso contrario da error semantico y lo agregamos
                             //System.out.println("Se encontro un error semantico");
                             ErrSem = true;
-                            ErrSemantico.add("\nSe trató de inicializar o agregar un nuevo valor a la variable: " + variable +
+                            ErrSemantico.add("\nSe trato de inicializar o agregar un nuevo valor a la variable: " + variable +
                                     " la cual no ha sido declarada\tLinea: " + i);
 
                         }
                     }
                     //Si el indicie es = a 6 quiere decir que se encontro una expresion
                     if (indice == 6) {
-                        //                       x=x + x-x;
-                        //Analizador Sintactico
+                    	//----System.out.println("Expresion");
                     }
                     VarsTkns = new ArrayList<>();
                     Variables.forEach((k, v) -> VarsTkns.add(v));
@@ -451,7 +495,8 @@ public class Controller implements Initializable {
                     CargaSemantico();//SE CARGAN LAS VARIABLES DEL ANALISIS A LA INTERGAZ
                     i++;
                 }
-            } else {
+            }
+            else {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Se encontraron errores sintacticos, proceda a corregir", ButtonType.OK);
                 alert.showAndWait();
                 return;
@@ -496,7 +541,8 @@ public class Controller implements Initializable {
                 });
 
             }
-        } else {//Se encontro que no se han hecho los analisi previos , muesta el error
+        }
+        else {//Se encontro que no se han hecho los analisi previos , muesta el error
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Debe realizar los analisis previos", ButtonType.OK);
             alert.showAndWait();
             return;
@@ -522,9 +568,6 @@ public class Controller implements Initializable {
         }
         if (ayudante2.equals("boolean")) {
             regex = Tipo.BOOLEAN.patron;
-        }
-        if (ayudante2.equals("string")) {
-            regex = Tipo.STRING.patron;
         }
         return regex;
     }
@@ -634,7 +677,7 @@ public class Controller implements Initializable {
 
     //Va a recorrer todas las variables y verificar que tengan valores distintos a nulo
     private void ChequeoVariablesSinInicializar() {
-        System.out.println("Entro al metodo");
+        //System.out.println("Entro al metodo");
         Warnings = new ArrayList<>();
         if (!Variables.isEmpty()) {
             Variables.forEach((v, k) -> {
@@ -672,5 +715,28 @@ public class Controller implements Initializable {
         lna2.setCellValueFactory(new PropertyValueFactory<Token, String>("Linea"));
         table2.getItems().setAll(t2);
 
+    }
+    private void CargaExpresiones() {
+        expasign.setCellValueFactory(new PropertyValueFactory<Expresion,String>("asigna"));
+        expexp.setCellValueFactory(new PropertyValueFactory<Expresion,String>("expresion"));
+        exppost.setCellValueFactory(new PropertyValueFactory<Expresion, String>("postorder"));
+        table3.getItems().setAll(t3);
+        table3.setRowFactory(e->{
+            TableRow<Expresion> row = new TableRow<>();
+            row.setOnMouseClicked(a-> {
+                if(!row.isEmpty()&&a.getClickCount()==2){
+                    Expresion click =row.getItem();
+                    t4 = FXCollections.observableArrayList(click.getTriplo());
+                   //CargaTriplos();
+                    try {
+                        TriplosTab();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                }
+            });
+            return row;
+        });
     }
 }
