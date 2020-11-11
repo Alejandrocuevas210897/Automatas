@@ -1,0 +1,10 @@
+class Prueba
+ {
+    int algo = 13;
+    public static void main2()
+    {
+	int d = 12;
+	d := d*(2+algo)+5+2;
+    
+    }
+}

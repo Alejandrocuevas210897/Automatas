@@ -94,24 +94,24 @@ public class Controller implements Initializable {
         tv.setVisible(true);
         TableColumn tbc = new TableColumn("ID");
         tbc.setPrefWidth(100);
-        TableColumn tbc2 = new TableColumn("T1");
+        TableColumn tbc2 = new TableColumn("Operando1");
         tbc2.setPrefWidth(100);
         TableColumn tbc3 = new TableColumn("Operador");
         tbc3.setPrefWidth(100);
-        TableColumn tbc4 = new TableColumn("T2");
+        TableColumn tbc4 = new TableColumn("Operando2");
         tbc4.setPrefWidth(100);
-        //TableColumn tbc5 = new TableColumn("Resultado");
-        //tbc5.setPrefWidth(100);
+        TableColumn tbc5 = new TableColumn("Resultado");
+        tbc5.setPrefWidth(100);
         tbc.setCellValueFactory(new PropertyValueFactory<Triplo, String>("idtriplo"));
         tbc2.setCellValueFactory(new PropertyValueFactory<Triplo, String>("t1"));
         tbc3.setCellValueFactory(new PropertyValueFactory<Triplo, String>("op"));
         tbc4.setCellValueFactory(new PropertyValueFactory<Triplo, String>("t2"));
-        //tbc5.setCellValueFactory(new PropertyValueFactory<Triplo, String>("resultado"));
-        tv.getColumns().addAll(tbc, tbc2, tbc3, tbc4/*, tbc5*/);
+        tbc5.setCellValueFactory(new PropertyValueFactory<Triplo, String>("resultado"));
+        tv.getColumns().addAll(tbc, tbc2, tbc3, tbc4, tbc5);
         tv.getItems().setAll(t4);
         temptab.setContent(tv);
         tabpane.getTabs().addAll(temptab);
-       // tabpane.getSelectionModel().select(temptab);
+        //tabpane.getSelectionModel().select(temptab);
     }
 
     public void AnalizadorLexico() {
@@ -290,17 +290,18 @@ public class Controller implements Initializable {
                     t3 = FXCollections.observableArrayList(Expresiones);
                     CargaExpresiones();
                     Expresiones.forEach(e -> {
-                    	//----System.out.println("Expresion: " + e.getAsigna() + " = " + e.getExpresion());
-                    	//---- System.out.println("Expresion postorder: " + e.getPostorder());
-                    	//----System.out.println("Triplos: ");
+                    	System.out.println("Expresion: " + e.getAsigna() + " = " + e.getExpresion());
+                        System.out.println("Expresion postorder: " + e.getPostorder());
+                    	System.out.println("Triplos: ");
                         e.getTriplo().forEach(System.out::println);
-                      //---- System.out.println(e.getAsigna() + " = t" + e.getTriplo().size());
+                        System.out.println(e.getAsigna() + " = TempCuevas" + e.getTriplo().size());
                         Triplo res=new Triplo();
                         res.setT1(e.getAsigna());
                         res.setT2("TempCuevas"+e.getTriplo().size());
                         res.setOp("=");
                         e.getTriplo().add(res);
-                      //---- System.out.println();
+                        
+                        System.out.println();
                     });
                 }
                 //Verifica si el patron obtenido hace match con el de la sintaxis general y si no existen errores sintacticos por linea

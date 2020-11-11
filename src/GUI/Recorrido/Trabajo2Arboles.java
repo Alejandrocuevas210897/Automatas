@@ -2,9 +2,6 @@ package GUI.Recorrido;
 
 import java.util.Scanner;
 
-/**
- * Created by guill on 02/05/2017.
- */
 public class Trabajo2Arboles {
     private final Scanner nc=new Scanner(System.in);
     private final ArbolBB<String> abb=new ArbolBB<>();
